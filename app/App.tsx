@@ -5,7 +5,7 @@ import { fabric } from "fabric";
 // import Navbar from "@/components/Navbar";
 
 import { useEffect, useRef, useState } from "react";
-import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectScaling, handleCanvasSelectionCreated, handleCanvaseMouseMove, handlePathCreated, handleResize, initializeFabric, renderCanvas } from "@/lib/canvas";
+import { handleCanvasMouseDown, handleCanvasMouseUp, handleCanvasObjectModified, handleCanvasObjectMoving, handleCanvasObjectScaling, handleCanvasSelectionCreated, handleCanvasZoom, handleCanvaseMouseMove, handlePathCreated, handleResize, initializeFabric, renderCanvas } from "@/lib/canvas";
 import { ActiveElement, Attributes } from "@/types/type";
 import { useMutation, useRedo, useStorage, useUndo } from "@/liveblocks.config";
 import { defaultNavElement } from "@/constants";
@@ -133,7 +133,7 @@ const Home = () => {
             isDrawing,
             shapeRef,
             selectedShapeRef,
-            syncShapeInStorage
+            syncShapeInStorage,
           })
          })
 
@@ -164,6 +164,20 @@ const Home = () => {
           })
          })
 
+         /**
+     * listen to the object moving event on the canvas which is fired
+     * when the user moves an object on the canvas.
+     *
+     * Event inspector: http://fabricjs.com/events
+     * Event list: http://fabricjs.com/docs/fabric.Canvas.html#fire
+     */
+        canvas?.on("object:moving", (options) => {
+          handleCanvasObjectMoving({
+            options,
+          });
+        });
+
+
          canvas.on("object:scaling", (options: any) => {
           handleCanvasObjectScaling({
             options, setElementAttributes
@@ -175,6 +189,20 @@ const Home = () => {
             options, syncShapeInStorage
           })
          })
+
+          /**
+     * listen to the mouse wheel event on the canvas which is fired when
+     * the user scrolls the mouse wheel on the canvas.
+     *
+     * Event inspector: http://fabricjs.com/events
+     * Event list: http://fabricjs.com/docs/fabric.Canvas.html#fire
+     */
+        canvas.on("mouse:wheel", (options) => {
+          handleCanvasZoom({
+            options,
+            canvas,
+          });
+        });
 
          window.addEventListener("resize", () => {
           handleResize({ 
@@ -213,7 +241,6 @@ const Home = () => {
     <main className="h-screen overflow-hidden">
       <Navbar 
        activeElement={activeElement}
-       handleActiveElement={handleActiveElement}
        imageInputRef={imageInputRef}
        handleImageUpload={(e: any) => {
         e.stopPropagation();
@@ -225,6 +252,7 @@ const Home = () => {
           syncShapeInStorage,
         })
        }}
+       handleActiveElement={handleActiveElement}
       />
 
       <section className="flex h-full flex-row">
